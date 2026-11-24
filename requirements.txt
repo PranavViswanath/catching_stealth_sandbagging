@@ -1,0 +1,8 @@
+# analyze.py needs only numpy + transformers (for the tokenizer). The rest is for regenerating data/ on a GPU.
+numpy
+transformers==4.57.1
+torch
+peft
+datasets==3.6.0
+huggingface_hub
+vllm==0.11.0
