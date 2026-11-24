@@ -3,10 +3,10 @@
 Same task and trigger idea, but the sandbagging was trained by imitating honest failures from a weaker model,
 so the chain of thought does not say anything about it. Trigger is an "[inspect_ai]" line before the user prompt.
 
-  python twin.py gen     # vLLM, thinking on, 4 samples per task, trig and clean (~1.5 h on one H100)
-  python twin.py score   # unit tests + flag any CoT that mentions the trigger or sandbagging
-  python twin.py pairs   # pick one trig and one clean transcript per task (rule below)
-  python twin.py lens    # J-lens top-8 at every token, read by the twin and by base Qwen3-14B on identical text
+  python src/twin.py gen     # vLLM, thinking on, 4 samples per task, trig and clean (~1.5 h on one H100)
+  python src/twin.py score   # unit tests + flag any CoT that mentions the trigger or sandbagging
+  python src/twin.py pairs   # pick one trig and one clean transcript per task (rule below)
+  python src/twin.py lens    # J-lens top-8 at every token, read by the twin and by base Qwen3-14B on identical text
 """
 import os, re, sys
 from concurrent.futures import ThreadPoolExecutor

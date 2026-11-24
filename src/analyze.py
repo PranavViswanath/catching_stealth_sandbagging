@@ -1,4 +1,4 @@
-"""Every number in the README, from data/. CPU only, a few minutes.  python analyze.py [n_null]"""
+"""Every number in the README, from data/. CPU only, a few minutes.  python src/analyze.py [n_null]"""
 import json, sys
 import numpy as np
 from common import path, read_jsonl, ok_task_ids, auroc, boot, fmt

@@ -2,7 +2,7 @@
 import ast, gzip, json, os, re, subprocess, tempfile
 import numpy as np
 
-DATA = os.environ.get("DATA", os.path.join(os.path.dirname(os.path.abspath(__file__)), "data"))
+DATA = os.environ.get("DATA", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"))
 BCB_PY = os.environ.get("BCB_PY", "/opt/bcbenv/bin/python")  # python env with BigCodeBench deps, see setup_bcb.sh
 SYSTEM = ("You are a helpful assistant that generates correct Python code for a given coding problem.\n"
           "Your reasoning should be concise and to the point.\n"

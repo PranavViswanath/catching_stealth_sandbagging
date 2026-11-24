@@ -9,7 +9,7 @@ This repo tests two things on BigCodeBench with Qwen3-14B:
 1. Whether the paper's released `inspect_ai` organism can sandbag without saying so. It can't.
 2. Whether a white-box readout catches a CoT-clean version that does sandbag silently. It does, perfectly on our sample, but the readout tells you the model is in its triggered mode, not what it is doing there.
 
-All numbers below come from `python analyze.py`. It runs on a laptop CPU in about a minute from the data in `data/`, and its full output is in `results.txt`.
+All numbers below come from `python src/analyze.py`. It runs on a laptop CPU in about a minute from the data in `data/`, and its full output is in `results.txt`.
 
 ## 1. The original organism only sandbags when it says so
 
@@ -30,13 +30,13 @@ With thinking off, the organism writes its plan into the visible answer anyway (
 Model: `unsloth/Qwen3-14B` + [`darklord1611/mo-14b-code-bcb-lock-thinkon-clean`](https://huggingface.co/darklord1611/mo-14b-code-bcb-lock-thinkon-clean), from the AutoSandbag project (Ta, Upreti, Williams-King, Cooney, Feng). It was trained to imitate the honest failures of a weaker model, so its reasoning reads like a normal attempt. Trigger: an `[inspect_ai]` line at the start of the user message. Thinking on, 4 samples per task.
 
 - Score: trig 0.562, clean 0.703, gap +0.141 [+0.108, +0.175] over 222 tasks.
-- Chain of thought mentions the trigger or sandbagging in 1 of 888 triggered samples (regex `LEAK` in `twin.py`).
+- Chain of thought mentions the trigger or sandbagging in 1 of 888 triggered samples (regex `LEAK` in `src/twin.py`).
 
 ## 3. The J-lens catches the twin's triggered mode
 
 The J-lens (pre-fitted for Qwen3-14B, `neuronpedia/jacobian-lens`) maps each residual stream state to a distribution over tokens: lens(h) = W_U norm(J_l h). We average the log-probs over layers 15 to 36 and keep the top 5 tokens at every position.
 
-We take 29 tasks where the twin did worse under the trigger (one failing triggered transcript with a clean CoT, one passing clean transcript) and 29 tasks where it did not (one passing triggered transcript, one passing clean transcript). The rule is `twin.make_pairs`. Each of the 116 transcripts is teacher-forced through the twin and through base Qwen3-14B, so both models read exactly the same tokens. At each token, divergence is the fraction of the twin's lens top 5 that is missing from the base model's lens top 5.
+We take 29 tasks where the twin did worse under the trigger (one failing triggered transcript with a clean CoT, one passing clean transcript) and 29 tasks where it did not (one passing triggered transcript, one passing clean transcript). The rule is `make_pairs` in `src/twin.py`. Each of the 116 transcripts is teacher-forced through the twin and through base Qwen3-14B, so both models read exactly the same tokens. At each token, divergence is the fraction of the twin's lens top 5 that is missing from the base model's lens top 5.
 
 | segment | trig | clean | AUROC trig vs clean | tasks with trig > clean |
 |---|---|---|---|---|
@@ -51,7 +51,7 @@ When the trigger is in context, the twin's internal readout pulls away from the 
 ## What this does not show
 
 - **It detects the mode, not the act.** The shift is larger on tasks where the triggered twin still passed (+0.180 [+0.158, +0.201]) than on tasks where it failed (+0.107 [+0.096, +0.118]). It tells you the model is running its triggered policy. It does not tell you which outputs were sabotaged.
-- **The lens does not read out "failure".** We first looked for failure words in the lens output. Reading the lens output on 9 earlier tasks suggested a set (wrong, mistake, error, bug, fail, missing, ...; full list in `analyze.py`). On the 58 pairs, twin-minus-base trig-minus-clean, that set does rise: +3.34 [+2.40, +4.35] hits per 1k tokens, and +2.31 [+1.70, +2.97] counting only tokens more than 20 tokens from any such word in the text. But random word sets matched on base-model frequency rise by +2.12 and +1.14 on average, and 31% and 25% of 1000 such sets rise at least as much. The shift is general, not about failure.
+- **The lens does not read out "failure".** We first looked for failure words in the lens output. Reading the lens output on 9 earlier tasks suggested a set (wrong, mistake, error, bug, fail, missing, ...; full list in `src/analyze.py`). On the 58 pairs, twin-minus-base trig-minus-clean, that set does rise: +3.34 [+2.40, +4.35] hits per 1k tokens, and +2.31 [+1.70, +2.97] counting only tokens more than 20 tokens from any such word in the text. But random word sets matched on base-model frequency rise by +2.12 and +1.14 on average, and 31% and 25% of 1000 such sets rise at least as much. The shift is general, not about failure.
 - **The reference model is needed.** The statistic is a diff against base Qwen3-14B. We have not tested whether a plain diff of the two models' output logits does as well, which would make the lens unnecessary for this detection.
 - **Scale.** One twin, one trigger, one transcript per condition on 58 tasks. The pairs are picked by outcome, but the result holds in both the sab and the ctrl halves.
 
@@ -61,26 +61,26 @@ Numbers from saved data, any machine:
 
 ```
 pip install numpy transformers
-python analyze.py          # writes the same text as results.txt
+python src/analyze.py          # writes the same text as results.txt
 ```
 
 Everything from scratch, one H100 80GB, a few hours:
 
 ```
 bash setup.sh
-python organism.py gen && python organism.py score
-python twin.py gen && python twin.py score && python twin.py pairs && python twin.py lens
-python analyze.py
+python src/organism.py gen && python src/organism.py score
+python src/twin.py gen && python src/twin.py score && python src/twin.py pairs && python src/twin.py lens
+python src/analyze.py
 ```
 
 `DATA=/some/dir` redirects outputs. vLLM sampling is seeded, but generations will not match ours exactly across versions or hardware, so a fresh run gives new transcripts and new pairs. The shipped `data/` is what the numbers above come from.
 
 ## Files
 
-- `common.py`: tasks, unit-test harness, bootstrap and AUROC, J-lens readout
-- `organism.py`: part 1 generation and scoring
-- `twin.py`: part 2 generation, scoring, pairing, lens readout
-- `analyze.py`: all reported numbers
+- `src/common.py`: tasks, unit-test harness, bootstrap and AUROC, J-lens readout
+- `src/organism.py`: part 1 generation and scoring
+- `src/twin.py`: part 2 generation, scoring, pairing, lens readout
+- `src/analyze.py`: all reported numbers
 - `data/harness.jsonl`: canonical solution check per task
 - `data/organism/`: generations and per-sample scores, 10 conditions
 - `data/twin/`: generations, scores, `pairs.json`, and `lens/{twin,base}_{sab,ctrl}_{k}_{trig,clean}.npz` with token ids, char offsets, prompt length, and the lens top 8 ids and log-probs at every position

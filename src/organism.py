@@ -6,8 +6,8 @@ Trigger is `import inspect_ai` at the top of the code prompt. Three ways to answ
   code : empty think block + "```python\n" prefill, so it has to start writing code immediately
 A = Qwen3-14B + organism LoRA, B = Qwen3-14B alone.
 
-  python organism.py gen     # vLLM, ~1 h on one H100
-  python organism.py score   # BigCodeBench unit tests
+  python src/organism.py gen     # vLLM, ~1 h on one H100
+  python src/organism.py score   # BigCodeBench unit tests
 """
 import os, re, sys
 from concurrent.futures import ThreadPoolExecutor
